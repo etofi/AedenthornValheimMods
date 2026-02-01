@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace MonsterAITweaks
 {
-    [BepInPlugin("aedenthorn.MonsterAITweaks", "Monster AI Tweaks", "0.6.2")]
+    [BepInPlugin("aedenthorn.MonsterAITweaks", "Monster AI Tweaks", "0.6.3")]
     public class BepInExPlugin: BaseUnityPlugin
     {
         public static readonly bool isDebug = true;
@@ -246,10 +246,10 @@ namespace MonsterAITweaks
             }
         }
 
-        [HarmonyPatch(typeof(MonsterAI), nameof(MonsterAI.SetHuntPlayer))]
-        public static class MonsterAI_SetHuntPlayer_Patch
+        [HarmonyPatch(typeof(BaseAI), nameof(BaseAI.SetHuntPlayer))]
+        public static class BaseAI_SetHuntPlayer_Patch
         {
-            public static bool Prefix(MonsterAI __instance, bool hunt)
+            public static bool Prefix(BaseAI __instance, bool hunt)
             {
                 if (!modEnabled.Value || !hunt)
                     return true;

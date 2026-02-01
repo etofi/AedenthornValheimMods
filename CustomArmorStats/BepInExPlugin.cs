@@ -14,7 +14,7 @@ using UnityEngine;
 
 namespace CustomArmorStats
 {
-    [BepInPlugin("aedenthorn.CustomArmorStats", "Custom Armor Stats", "0.8.0")]
+    [BepInPlugin("aedenthorn.CustomArmorStats", "Custom Armor Stats", "0.8.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         public static BepInExPlugin context;
@@ -368,7 +368,8 @@ namespace CustomArmorStats
                         var fi = GetField(kvp.Key);
                         if (fi != null)
                         {
-                            fi.SetValue(item.m_shared.m_equipStatusEffect, GetValue(fi, kvp.Value));
+                            SetValue(fi, item.m_shared.m_equipStatusEffect, kvp.Value);
+                            Dbgl($"set value of {fi.Name} to {fi.GetValue(item.m_shared.m_equipStatusEffect)}");
                         }
                     }
                 }
@@ -392,6 +393,45 @@ namespace CustomArmorStats
             catch (Exception e) 
             {
                 Dbgl($"Error setting data for {armor.name}:\n\n{e.StackTrace}", BepInEx.Logging.LogLevel.Warning);
+            }
+        }
+
+        private static void SetValue(FieldInfo fi, StatusEffect se, object value)
+        {
+            try
+            {
+                if (fi.FieldType == typeof(float))
+                {
+                    fi.SetValue(se, Convert.ToSingle(value));
+                }
+                else if (fi.FieldType == typeof(int))
+                {
+                    fi.SetValue(se, Convert.ToInt32(value));
+                }
+                else if (fi.FieldType == typeof(Vector3))
+                {
+                    fi.SetValue(se, new Vector3(Convert.ToSingle(((JObject)value)["x"]), Convert.ToSingle(((JObject)value)["y"]), Convert.ToSingle(((JObject)value)["z"])));
+                }
+                else if (fi.FieldType.IsEnum)
+                {
+                    if (value is string)
+                    {
+
+                        fi.SetValue(se, Enum.Parse(fi.FieldType, (string)value));
+                    }
+                    else if (value is int)
+                    {
+                        fi.SetValue(se, Convert.ChangeType(value, fi.FieldType));
+                    }
+                }
+                else
+                {
+                    fi.SetValue(se, value);
+                }
+            }
+            catch(Exception ex) 
+            {
+                Dbgl($"Error trying to set value of ({fi.FieldType}){fi.Name} to ({value.GetType()}){value}:\n\n {ex}", BepInEx.Logging.LogLevel.Warning);
             }
         }
 
