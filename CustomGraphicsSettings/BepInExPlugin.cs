@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace CustomGraphicsSettings
 {
-    [BepInPlugin("aedenthorn.CustomGraphicsSettings", "Custom Graphics Settings", "1.0.0")]
+    [BepInPlugin("aedenthorn.CustomGraphicsSettings", "Custom Graphics Settings", "1.1.0")]
     public class BepInExPlugin: BaseUnityPlugin
     {
         public static readonly bool isDebug = true;
@@ -172,7 +172,7 @@ namespace CustomGraphicsSettings
             QualitySettings.asyncUploadTimeSlice = asyncUploadTimeSlice.Value;
             QualitySettings.billboardsFaceCameraPosition = billboardsFaceCameraPosition.Value;
             QualitySettings.lodBias = lodBias.Value;
-            QualitySettings.masterTextureLimit = masterTextureLimit.Value;
+            QualitySettings.globalTextureMipmapLimit = masterTextureLimit.Value;
             QualitySettings.maximumLODLevel = maximumLODLevel.Value;
             QualitySettings.maxQueuedFrames = maxQueuedFrames.Value;
             QualitySettings.particleRaycastBudget = particleRaycastBudget.Value;
@@ -200,7 +200,7 @@ namespace CustomGraphicsSettings
         }
 
 
-        [HarmonyPatch(typeof(Settings), "ApplyQualitySettings")]
+        [HarmonyPatch(typeof(GraphicsSettingsManager), "ApplyQualitySettings")]
         public static class Settings_ApplyQualitySettings_Patch
         {
             public static void Postfix()

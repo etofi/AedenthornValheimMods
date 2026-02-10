@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -14,7 +15,7 @@ using UnityEngine;
 
 namespace CustomArmorStats
 {
-    [BepInPlugin("aedenthorn.CustomArmorStats", "Custom Armor Stats", "0.8.1")]
+    [BepInPlugin("aedenthorn.CustomArmorStats", "Custom Armor Stats", "0.8.2")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         public static BepInExPlugin context;
@@ -28,7 +29,7 @@ namespace CustomArmorStats
         
         public static ConfigEntry<string> waterModifierName;
 
-        public static List<ArmorData> armorDatas;
+        public static Dictionary<string, ArmorData> armorDatas;
         public static string assetPath;
 
         public enum NewDamageTypes 
@@ -59,6 +60,7 @@ namespace CustomArmorStats
 
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), null);
         }
+
 
         [HarmonyPatch(typeof(ZNetScene), "Awake")]
         public static class ZNetScene_Awake_Patch
@@ -292,14 +294,12 @@ namespace CustomArmorStats
         public static void LoadAllArmorData(ZNetScene scene)
         {
             armorDatas = GetArmorDataFromFiles();
-            foreach (var armor in armorDatas)
+            foreach (var item in FindObjectsByType<ItemDrop>(FindObjectsSortMode.None))
             {
-                GameObject go = scene.GetPrefab(armor.name);
-                if (go == null)
-                    continue;
-                ItemDrop.ItemData item = go.GetComponent<ItemDrop>().m_itemData;
-                SetArmorData(ref item, armor);
-                go.GetComponent<ItemDrop>().m_itemData = item;
+                if (armorDatas.TryGetValue(item.m_itemData.m_shared.m_name, out var armor))
+                {
+                    SetArmorData(item.m_itemData, armor);
+                }
             }
         }
 
@@ -307,9 +307,11 @@ namespace CustomArmorStats
         {
             try
             {
-                var name = instance.m_dropPrefab.name;
-                var armor = armorDatas.First(d => d.name == name);
-                SetArmorData(ref instance, armor);
+                var name = instance.m_shared.m_name;
+                if(armorDatas.TryGetValue(name, out var armor))
+                {
+                    SetArmorData(instance, armor);
+                }
                 //Dbgl($"Set armor data for {instance.name}");
             }
             catch
@@ -318,16 +320,16 @@ namespace CustomArmorStats
             }
         }
 
-        public static List<ArmorData> GetArmorDataFromFiles()
+        public static Dictionary<string, ArmorData> GetArmorDataFromFiles()
         {
             CheckModFolder();
 
-            List<ArmorData> armorDatas = new List<ArmorData>();
+            Dictionary<string, ArmorData> armorDatas = new Dictionary<string, ArmorData>();
 
             foreach (string file in Directory.GetFiles(assetPath, "*.json"))
             {
                 ArmorData data = JsonConvert.DeserializeObject<ArmorData>(File.ReadAllText(file));
-                armorDatas.Add(data);
+                armorDatas[data.name] = data;
             }
             return armorDatas;
         }
@@ -341,14 +343,18 @@ namespace CustomArmorStats
             }
         }
 
-        public static void SetArmorData(ref ItemDrop.ItemData item, ArmorData armor)
+        public static void SetArmorData(ItemDrop.ItemData item, ArmorData armor)
         {
             try
             {
                 item.m_shared.m_armor = armor.armor;
                 item.m_shared.m_armorPerLevel = armor.armorPerLevel;
                 item.m_shared.m_movementModifier = armor.movementModifier;
-
+                if(armor.setName != null)
+                {
+                    item.m_shared.m_setName = armor.setName;
+                    item.m_shared.m_setSize = armor.setSize;
+                }
                 item.m_shared.m_damageModifiers.Clear();
                 foreach (string modString in armor.damageModifiers)
                 {
@@ -479,7 +485,9 @@ namespace CustomArmorStats
                 armor = item.m_shared.m_armor,
                 armorPerLevel = item.m_shared.m_armorPerLevel,
                 movementModifier = item.m_shared.m_movementModifier,
-                damageModifiers = item.m_shared.m_damageModifiers.Select(m => m.m_type + ":" + m.m_modifier).ToList()
+                damageModifiers = item.m_shared.m_damageModifiers.Select(m => m.m_type + ":" + m.m_modifier).ToList(),
+                setName = item.m_shared.m_setName,
+                setSize = item.m_shared.m_setSize
             };
             if (item.m_shared.m_equipStatusEffect is SE_Stats)
             {

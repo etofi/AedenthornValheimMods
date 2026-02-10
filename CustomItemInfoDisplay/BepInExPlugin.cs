@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace CustomItemInfoDisplay
 {
-    [BepInPlugin("aedenthorn.CustomItemInfoDisplay", "Custom Item Info Display", "0.5.0")]
+    [BepInPlugin("aedenthorn.CustomItemInfoDisplay", "Custom Item Info Display", "0.6.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         public static BepInExPlugin context;
@@ -75,7 +75,7 @@ namespace CustomItemInfoDisplay
             return true;
         }
 
-        [HarmonyPatch(typeof(ItemDrop.ItemData), "GetTooltip", new Type[]{typeof(ItemDrop.ItemData), typeof(int), typeof(bool), typeof(float) })]
+        [HarmonyPatch(typeof(ItemDrop.ItemData), "GetTooltip", new Type[]{typeof(ItemDrop.ItemData), typeof(int), typeof(bool), typeof(float), typeof(int) })]
         public static class GetTooltip_Patch
         {
             public static bool Prefix(ItemDrop.ItemData item, int qualityLevel, float worldLevel, bool crafting, ref string __result)
