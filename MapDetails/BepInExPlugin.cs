@@ -11,7 +11,7 @@ using UnityEngine;
 
 namespace MapDetails
 {
-    [BepInPlugin("aedenthorn.MapDetails", "Map Details", "0.4.0")]
+    [BepInPlugin("aedenthorn.MapDetails", "Map Details", "0.4.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         public static BepInExPlugin context;
@@ -105,9 +105,9 @@ namespace MapDetails
         [HarmonyPatch(typeof(Player), "PlacePiece")]
         public static class Player_PlacePiece_Patch
         {
-            public static void Postfix(bool __result)
+            public static void Postfix()
             {
-                if (!modEnabled.Value || !__result)
+                if (!modEnabled.Value)
                     return;
                 context.StartCoroutine(UpdateMap(true));
             }
