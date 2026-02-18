@@ -11,7 +11,7 @@ using UnityEngine;
 
 namespace MapDetails
 {
-    [BepInPlugin("aedenthorn.MapDetails", "Map Details", "0.4.1")]
+    [BepInPlugin("aedenthorn.MapDetails", "Map Details", "0.4.2")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         public static BepInExPlugin context;
@@ -143,6 +143,9 @@ namespace MapDetails
 
         public static IEnumerator UpdateMap(bool force)
         {
+            if(Player.m_localPlayer is null || Minimap.instance is null)
+                yield break;
+
             if(force)
                 yield return null;
 
@@ -159,7 +162,7 @@ namespace MapDetails
             foreach (Collider collider in Physics.OverlapSphere(Player.m_localPlayer.transform.position, Mathf.Max(showRange.Value, 0), LayerMask.GetMask(new string[] { "piece" })))
             {
                 Piece piece = collider.GetComponentInParent<Piece>();
-                if (piece != null && piece.GetComponent<ZNetView>().IsValid())
+                if (piece != null && piece.GetComponent<ZNetView>()?.IsValid() == true)
                 {
                     Vector3 pos = piece.transform.position;
                     float mx;
