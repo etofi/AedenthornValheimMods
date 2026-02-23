@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace JumpRunDodgeSneakWalk
 {
-    [BepInPlugin("aedenthorn.JumpRunDodgeSneakWalk", "Jump Run Sneak Walk Swim", "0.2.0")]
+    [BepInPlugin("aedenthorn.JumpRunDodgeSneakWalk", "Jump Run Sneak Walk Swim", "0.3.0")]
     public class BepInExPlugin : BaseUnityPlugin
     {
         public static readonly bool isDebug = true;
@@ -56,7 +56,7 @@ namespace JumpRunDodgeSneakWalk
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), null);
         }
 
-        public static int JumpNumber { get; public set; }
+        public static int JumpNumber { get; set; }
 
 
         [HarmonyPatch(typeof(Player), "GetJogSpeedFactor")]
