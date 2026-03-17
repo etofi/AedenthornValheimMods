@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace CustomWeaponStats
 {
-    [BepInPlugin("aedenthorn.CustomWeaponStats", "Custom Weapon Stats", "0.9.0")]
+    [BepInPlugin("aedenthorn.CustomWeaponStats", "Custom Weapon Stats", "0.9.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         public static BepInExPlugin context;

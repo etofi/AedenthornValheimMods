@@ -143,7 +143,7 @@ namespace MapDetails
 
         public static IEnumerator UpdateMap(bool force)
         {
-            if(Player.m_localPlayer is null || Minimap.instance is null)
+            if(Player.m_localPlayer is null || Minimap.instance is null || mapTexture is null)
                 yield break;
 
             if(force)
