@@ -15,7 +15,7 @@ using UnityEngine;
 
 namespace CustomArmorStats
 {
-    [BepInPlugin("aedenthorn.CustomArmorStats", "Custom Armor Stats", "0.8.2")]
+    [BepInPlugin("aedenthorn.CustomArmorStats", "Custom Armor Stats", "0.8.4")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         public static BepInExPlugin context;
@@ -29,7 +29,7 @@ namespace CustomArmorStats
         
         public static ConfigEntry<string> waterModifierName;
 
-        public static Dictionary<string, ArmorData> armorDatas;
+        public static Dictionary<string, ArmorData> armorDatas = new Dictionary<string, ArmorData>();
         public static string assetPath;
 
         public enum NewDamageTypes 
@@ -69,7 +69,7 @@ namespace CustomArmorStats
             {
                 if (!modEnabled.Value)
                     return;
-                LoadAllArmorData(__instance);
+                LoadAllArmorData();
             }
 
         }
@@ -81,7 +81,8 @@ namespace CustomArmorStats
             {
                 if (!modEnabled.Value)
                     return;
-                CheckArmorData(ref __instance.m_itemData);
+
+                CheckArmorData(ref __instance);
             }
         }
 
@@ -92,7 +93,7 @@ namespace CustomArmorStats
             {
                 if (!modEnabled.Value)
                     return;
-                CheckArmorData(ref __instance.m_itemData);
+                CheckArmorData(ref __instance);
             }
         }
 
@@ -291,32 +292,37 @@ namespace CustomArmorStats
             return a != HitData.DamageModifier.Ignore && (b == HitData.DamageModifier.Immune || ((a != HitData.DamageModifier.VeryResistant || b != HitData.DamageModifier.Resistant) && (a != HitData.DamageModifier.VeryWeak || b != HitData.DamageModifier.Weak)));
         }
 
-        public static void LoadAllArmorData(ZNetScene scene)
+        public static void LoadAllArmorData()
         {
+            if (ZNetScene.instance == null)
+            {
+                return;
+            }
             armorDatas = GetArmorDataFromFiles();
             foreach (var item in FindObjectsByType<ItemDrop>(FindObjectsSortMode.None))
             {
-                if (armorDatas.TryGetValue(item.m_itemData.m_shared.m_name, out var armor))
+                if (armorDatas.TryGetValue(item.m_itemData.m_dropPrefab.name, out var armor))
                 {
                     SetArmorData(item.m_itemData, armor);
                 }
             }
         }
 
-        public static void CheckArmorData(ref ItemDrop.ItemData instance)
+        public static void CheckArmorData(ref ItemDrop instance)
         {
+            var name = (string)AccessTools.Method(typeof(ItemDrop), "GetPrefabName").Invoke(instance, new object[] { instance.gameObject.name });
             try
             {
-                var name = instance.m_shared.m_name;
                 if(armorDatas.TryGetValue(name, out var armor))
                 {
-                    SetArmorData(instance, armor);
+                    Dbgl($"Setting armor data for {name}");
+                    SetArmorData(instance.m_itemData, armor);
+                    Dbgl($"Set armor data for {name}");
                 }
-                //Dbgl($"Set armor data for {instance.name}");
             }
-            catch
+            catch(Exception e)
             {
-
+                    Dbgl($"Error setting armor data for {name}:\n\n{e}", BepInEx.Logging.LogLevel.Warning);
             }
         }
 
@@ -367,7 +373,7 @@ namespace CustomArmorStats
                     Dbgl($"Got equip status effects for {armor.name}");
                     if (item.m_shared.m_equipStatusEffect is null)
                     {
-                        item.m_shared.m_equipStatusEffect = new SE_Stats();
+                        item.m_shared.m_equipStatusEffect = ScriptableObject.CreateInstance<SE_Stats>();
                     }
                     foreach (var kvp in armor.equipStatusEffects)
                     {
@@ -530,8 +536,7 @@ namespace CustomArmorStats
                 else if (text.ToLower().Equals($"{typeof(BepInExPlugin).Namespace.ToLower()} reload"))
                 {
                     armorDatas = GetArmorDataFromFiles();
-                    if(ZNetScene.instance)
-                        LoadAllArmorData(ZNetScene.instance);
+                    LoadAllArmorData();
                     __instance.AddString(text);
                     __instance.AddString($"{context.Info.Metadata.Name} reloaded armor stats from files");
                     return false;
@@ -562,7 +567,7 @@ namespace CustomArmorStats
                     if (armorData == null)
                         return false;
                     CheckModFolder();
-                    File.WriteAllText(Path.Combine(assetPath, armorData.name + ".json"), JsonConvert.SerializeObject(armorData, Formatting.Indented));
+                    File.WriteAllText(Path.Combine(assetPath, armorData.name + ".json"), JsonConvert.SerializeObject(armorData, Formatting.Indented, new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore }));
                     __instance.AddString(text);
                     __instance.AddString($"{context.Info.Metadata.Name} saved armor data to {armor}.json");
                     return false;
@@ -574,7 +579,7 @@ namespace CustomArmorStats
                     ArmorData armorData = GetArmorDataByName(armor);
                     if (armorData == null)
                         return false;
-                    Dbgl(JsonConvert.SerializeObject(armorData, Formatting.Indented));
+                    Dbgl(JsonConvert.SerializeObject(armorData, Formatting.Indented, new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore }));
                     __instance.AddString(text);
                     __instance.AddString($"{context.Info.Metadata.Name} dumped {armor}");
                     return false;
